@@ -12,7 +12,9 @@ import {
 } from 'recharts';
 
 // ── API ───────────────────────────────────────────────────────────────────────
-const API_BASE = 'http://localhost:3001/fhir';
+// In production, set REACT_APP_API_BASE to your deployed backend URL,
+// e.g. https://your-backend.onrender.com/fhir
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001/fhir';
 
 async function fhirRequest(path, options = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
