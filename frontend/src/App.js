@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  LayoutDashboard, Users, Plus, Search, X,
+  LayoutDashboard, Users, Plus, Search, X, Menu,
   Pencil, Trash2, AlertCircle, Loader2, CheckCircle2, TrendingUp,
   ChevronRight, Calendar, Activity, ArrowLeft, Heart, Thermometer,
   Wind, Droplets, Ruler, Weight, BarChart2, TableProperties, Phone, Mail,
@@ -298,6 +298,7 @@ function VitalChart({ vital, data }) {
 function VitalTable({ vital, data }) {
   if (!data || data.length === 0) return <div className="text-slate-400 text-sm text-center py-6">No data available</div>;
   return (
+    <div className="overflow-x-auto">
     <table className="w-full text-sm">
       <thead><tr className="border-b border-slate-200 bg-slate-50 text-slate-500 text-xs uppercase">
         <th className="text-left px-4 py-2">Date</th>
@@ -314,6 +315,7 @@ function VitalTable({ vital, data }) {
         ))}
       </tbody>
     </table>
+    </div>
   );
 }
 
@@ -456,26 +458,41 @@ function PatientForm({ initial, onSave, onClose }) {
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
-function Sidebar({ activePage, navigate }) {
+function Sidebar({ activePage, navigate, open, onClose }) {
   const items = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/' },
     { id: 'patients',  label: 'Patients',  icon: Users,           path: '/patients' },
   ];
   return (
-    <aside className="w-60 min-h-screen bg-white border-r border-slate-200 flex flex-col fixed left-0 top-0 bottom-0 z-20">
-      <div className="p-5 flex items-center gap-3 border-b border-slate-100">
-        <div className="bg-blue-600 p-1.5 rounded-lg text-white"><Activity size={18}/></div>
-        <span className="font-bold text-slate-800 text-base">Pediatrics Practice</span>
-      </div>
-      <nav className="flex-1 p-3 space-y-0.5">
-        {items.map(({ id, label, icon: Icon, path }) => (
-          <button key={id} onClick={() => navigate(path)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${activePage === id ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}>
-            <Icon size={18} className={activePage === id ? 'text-blue-600' : 'text-slate-400'}/>{label}
+    <>
+      {/* Mobile backdrop */}
+      {open && (
+        <div className="fixed inset-0 bg-slate-900/40 z-30 md:hidden" onClick={onClose}/>
+      )}
+
+      <aside className={`w-60 min-h-screen bg-white border-r border-slate-200 flex flex-col fixed left-0 top-0 bottom-0 z-40
+        transform transition-transform duration-200 ease-in-out
+        ${open ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+        <div className="p-5 flex items-center justify-between gap-3 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-600 p-1.5 rounded-lg text-white"><Activity size={18}/></div>
+            <span className="font-bold text-slate-800 text-base">Pediatrics Practice</span>
+          </div>
+          {/* Close button — mobile only */}
+          <button onClick={onClose} className="md:hidden text-slate-400 hover:text-slate-600 p-1">
+            <X size={20}/>
           </button>
-        ))}
-      </nav>
-    </aside>
+        </div>
+        <nav className="flex-1 p-3 space-y-0.5">
+          {items.map(({ id, label, icon: Icon, path }) => (
+            <button key={id} onClick={() => { navigate(path); onClose(); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${activePage === id ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}>
+              <Icon size={18} className={activePage === id ? 'text-blue-600' : 'text-slate-400'}/>{label}
+            </button>
+          ))}
+        </nav>
+      </aside>
+    </>
   );
 }
 
@@ -550,7 +567,7 @@ function DashboardPage({ patients, loading, onAddPatient, navigate }) {
         <button onClick={onAddPatient} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 font-medium text-sm transition-colors shadow-sm"><Plus size={16}/> Add Patient</button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         {[['Total Patients', patients.length, Users],['Recent Records', Math.min(patients.length, 10), TrendingUp]].map(([label, val, Icon]) => (
           <div key={label} className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
             <div className="flex items-center gap-2 text-slate-500 text-sm mb-3"><Icon size={15}/>{label}</div>
@@ -559,7 +576,7 @@ function DashboardPage({ patients, loading, onAddPatient, navigate }) {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Vaccine doses bar chart */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
           <h2 className="font-semibold text-slate-800 mb-1 flex items-center gap-2"><Syringe size={16} className="text-blue-600"/> Vaccine Doses by Status</h2>
@@ -657,6 +674,7 @@ function PatientsPage({ patients, loading, error, onAdd, onEdit, onDelete, onSea
       )}
       {!loading && patients.length>0 && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead><tr className="border-b border-slate-200 bg-slate-50 text-slate-500 text-xs uppercase tracking-wide">
               <th className="text-left px-6 py-3 font-semibold">Patient</th>
@@ -688,6 +706,7 @@ function PatientsPage({ patients, loading, error, onAdd, onEdit, onDelete, onSea
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>
@@ -999,7 +1018,7 @@ function PatientDetailPage({ patientId, navigate }) {
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {VITALS.map(vital => (
             <VitalCard key={vital.code} vital={vital} data={obsGroups[vital.code]} viewMode={viewMode}/>
           ))}
@@ -1007,7 +1026,7 @@ function PatientDetailPage({ patientId, navigate }) {
       </div>
 
       {/* Conditions + Medications */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Conditions */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100">
@@ -1017,6 +1036,7 @@ function PatientDetailPage({ patientId, navigate }) {
           {conditions.length === 0
             ? <div className="text-center py-8 text-slate-400 text-sm">No conditions recorded</div>
             : (
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="border-b border-slate-100 bg-slate-50 text-slate-500 text-xs uppercase">
                   <th className="text-left px-5 py-2.5 font-semibold">Condition</th>
@@ -1031,6 +1051,7 @@ function PatientDetailPage({ patientId, navigate }) {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
         </div>
 
@@ -1043,6 +1064,7 @@ function PatientDetailPage({ patientId, navigate }) {
           {medications.length === 0
             ? <div className="text-center py-8 text-slate-400 text-sm">No medications recorded</div>
             : (
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="border-b border-slate-100 bg-slate-50 text-slate-500 text-xs uppercase">
                   <th className="text-left px-5 py-2.5 font-semibold">Medication</th>
@@ -1059,6 +1081,7 @@ function PatientDetailPage({ patientId, navigate }) {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
         </div>
       </div>
@@ -1083,6 +1106,7 @@ export default function App() {
   const [formTarget,   setFormTarget]   = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting,     setDeleting]     = useState(false);
+  const [sidebarOpen,  setSidebarOpen]  = useState(false);
 
   const loadPatients = useCallback(async (name = '') => {
     setLoading(true); setError('');
@@ -1126,14 +1150,19 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans flex">
-      <Sidebar activePage={activePage} navigate={navigate}/>
+      <Sidebar activePage={activePage} navigate={navigate} open={sidebarOpen} onClose={() => setSidebarOpen(false)}/>
 
-      <div className="flex-1 ml-60">
+      <div className="flex-1 md:ml-60 min-w-0">
         {/* Topbar */}
-        <header className="bg-white border-b border-slate-200 px-8 py-3.5 flex items-center justify-end sticky top-0 z-10">
+        <header className="bg-white border-b border-slate-200 px-4 md:px-8 py-3.5 flex items-center justify-between sticky top-0 z-10">
+          {/* Hamburger — mobile only */}
+          <button onClick={() => setSidebarOpen(true)} className="md:hidden text-slate-500 hover:text-slate-700 p-1 -ml-1">
+            <Menu size={22}/>
+          </button>
+          <div className="md:hidden font-bold text-slate-800 text-sm">Pediatrics Practice</div>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">A</div>
-            <div className="text-right"><p className="text-sm font-semibold text-slate-800 leading-tight">Administrator</p><p className="text-xs text-slate-400">Admin</p></div>
+            <div className="text-right hidden sm:block"><p className="text-sm font-semibold text-slate-800 leading-tight">Administrator</p><p className="text-xs text-slate-400">Admin</p></div>
           </div>
         </header>
 
